@@ -3,6 +3,7 @@ package plc.project;
 import java.util.List;
 
 /**
+ * Test
  * The lexer works through three main functions:
  *
  *  - {@link #lex()}, which repeatedly calls lexToken() and skips whitespace
