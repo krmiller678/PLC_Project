@@ -22,7 +22,7 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testExpressionStatement(String test, List<Token> tokens, Ast.Stmt.Expression expected) {
+    void testExpressionStatement(String test, List<Token> tokens, Ast.Statement.Expression expected) {
         test(tokens, expected, Parser::parseStatement);
     }
 
@@ -30,20 +30,20 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Function Expression",
                         Arrays.asList(
-                                //name();
+                                // name();
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "(", 4),
                                 new Token(Token.Type.OPERATOR, ")", 5),
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
-                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "name", Arrays.asList()))
+                        new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList()))
                 )
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testAssignmentStatement(String test, List<Token> tokens, Ast.Stmt.Assignment expected) {
+    void testAssignmentStatement(String test, List<Token> tokens, Ast.Statement.Assignment expected) {
         test(tokens, expected, Parser::parseStatement);
     }
 
@@ -51,15 +51,15 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Assignment",
                         Arrays.asList(
-                                //name = value;
+                                // name = value;
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "=", 5),
                                 new Token(Token.Type.IDENTIFIER, "value", 7),
                                 new Token(Token.Type.OPERATOR, ";", 12)
                         ),
-                        new Ast.Stmt.Assignment(
-                                new Ast.Expr.Access(Optional.empty(), "name"),
-                                new Ast.Expr.Access(Optional.empty(), "value")
+                        new Ast.Statement.Assignment(
+                                new Ast.Expression.Access(Optional.empty(), "name"),
+                                new Ast.Expression.Access(Optional.empty(), "value")
                         )
                 )
         );
@@ -67,7 +67,7 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testLiteralExpression(String test, List<Token> tokens, Ast.Expr.Literal expected) {
+    void testLiteralExpression(String test, List<Token> tokens, Ast.Expression.Literal expected) {
         test(tokens, expected, Parser::parseExpression);
     }
 
@@ -75,34 +75,34 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Boolean Literal",
                         Arrays.asList(new Token(Token.Type.IDENTIFIER, "TRUE", 0)),
-                        new Ast.Expr.Literal(Boolean.TRUE)
+                        new Ast.Expression.Literal(Boolean.TRUE)
                 ),
                 Arguments.of("Integer Literal",
                         Arrays.asList(new Token(Token.Type.INTEGER, "1", 0)),
-                        new Ast.Expr.Literal(new BigInteger("1"))
+                        new Ast.Expression.Literal(new BigInteger("1"))
                 ),
                 Arguments.of("Decimal Literal",
                         Arrays.asList(new Token(Token.Type.DECIMAL, "2.0", 0)),
-                        new Ast.Expr.Literal(new BigDecimal("2.0"))
+                        new Ast.Expression.Literal(new BigDecimal("2.0"))
                 ),
                 Arguments.of("Character Literal",
                         Arrays.asList(new Token(Token.Type.CHARACTER, "'c'", 0)),
-                        new Ast.Expr.Literal('c')
+                        new Ast.Expression.Literal('c')
                 ),
                 Arguments.of("String Literal",
                         Arrays.asList(new Token(Token.Type.STRING, "\"string\"", 0)),
-                        new Ast.Expr.Literal("string")
+                        new Ast.Expression.Literal("string")
                 ),
                 Arguments.of("Escape Character",
                         Arrays.asList(new Token(Token.Type.STRING, "\"Hello,\\nWorld!\"", 0)),
-                        new Ast.Expr.Literal("Hello,\nWorld!")
+                        new Ast.Expression.Literal("Hello,\nWorld!")
                 )
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testGroupExpression(String test, List<Token> tokens, Ast.Expr.Group expected) {
+    void testGroupExpression(String test, List<Token> tokens, Ast.Expression.Group expected) {
         test(tokens, expected, Parser::parseExpression);
     }
 
@@ -110,25 +110,25 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Grouped Variable",
                         Arrays.asList(
-                                //(expr)
+                                // (expr)
                                 new Token(Token.Type.OPERATOR, "(", 0),
                                 new Token(Token.Type.IDENTIFIER, "expr", 1),
                                 new Token(Token.Type.OPERATOR, ")", 5)
                         ),
-                        new Ast.Expr.Group(new Ast.Expr.Access(Optional.empty(), "expr"))
+                        new Ast.Expression.Group(new Ast.Expression.Access(Optional.empty(), "expr"))
                 ),
                 Arguments.of("Grouped Binary",
                         Arrays.asList(
-                                //(expr1 + expr2)
+                                // (expr1 + expr2)
                                 new Token(Token.Type.OPERATOR, "(", 0),
                                 new Token(Token.Type.IDENTIFIER, "expr1", 1),
                                 new Token(Token.Type.OPERATOR, "+", 7),
                                 new Token(Token.Type.IDENTIFIER, "expr2", 9),
                                 new Token(Token.Type.OPERATOR, ")", 14)
                         ),
-                        new Ast.Expr.Group(new Ast.Expr.Binary("+",
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2")
+                        new Ast.Expression.Group(new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
                         ))
                 )
         );
@@ -136,7 +136,7 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testBinaryExpression(String test, List<Token> tokens, Ast.Expr.Binary expected) {
+    void testBinaryExpression(String test, List<Token> tokens, Ast.Expression.Binary expected) {
         test(tokens, expected, Parser::parseExpression);
     }
 
@@ -144,50 +144,50 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Binary And",
                         Arrays.asList(
-                                //expr1 AND expr2
+                                // expr1 && expr2
                                 new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                                new Token(Token.Type.IDENTIFIER, "AND", 6),
+                                new Token(Token.Type.OPERATOR, "&&", 6),
                                 new Token(Token.Type.IDENTIFIER, "expr2", 10)
                         ),
-                        new Ast.Expr.Binary("AND",
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2")
+                        new Ast.Expression.Binary("&&",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
                         )
                 ),
                 Arguments.of("Binary Equality",
                         Arrays.asList(
-                                //expr1 == expr2
+                                // expr1 == expr2
                                 new Token(Token.Type.IDENTIFIER, "expr1", 0),
                                 new Token(Token.Type.OPERATOR, "==", 6),
                                 new Token(Token.Type.IDENTIFIER, "expr2", 9)
                         ),
-                        new Ast.Expr.Binary("==",
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2")
+                        new Ast.Expression.Binary("==",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
                         )
                 ),
                 Arguments.of("Binary Addition",
                         Arrays.asList(
-                                //expr1 + expr2
+                                // expr1 + expr2
                                 new Token(Token.Type.IDENTIFIER, "expr1", 0),
                                 new Token(Token.Type.OPERATOR, "+", 6),
                                 new Token(Token.Type.IDENTIFIER, "expr2", 8)
                         ),
-                        new Ast.Expr.Binary("+",
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2")
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
                         )
                 ),
                 Arguments.of("Binary Multiplication",
                         Arrays.asList(
-                                //expr1 * expr2
+                                // expr1 * expr2
                                 new Token(Token.Type.IDENTIFIER, "expr1", 0),
                                 new Token(Token.Type.OPERATOR, "*", 6),
                                 new Token(Token.Type.IDENTIFIER, "expr2", 8)
                         ),
-                        new Ast.Expr.Binary("*",
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2")
+                        new Ast.Expression.Binary("*",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
                         )
                 )
         );
@@ -195,31 +195,34 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testAccessExpression(String test, List<Token> tokens, Ast.Expr.Access expected) {
+    void testAccessExpression(String test, List<Token> tokens, Ast.Expression.Access expected) {
         test(tokens, expected, Parser::parseExpression);
     }
 
     private static Stream<Arguments> testAccessExpression() {
         return Stream.of(
                 Arguments.of("Variable",
+                        // name
                         Arrays.asList(new Token(Token.Type.IDENTIFIER, "name", 0)),
-                        new Ast.Expr.Access(Optional.empty(), "name")
+                        new Ast.Expression.Access(Optional.empty(), "name")
                 ),
+
                 Arguments.of("Field Access",
                         Arrays.asList(
-                                //obj.field
+                                // obj.field
                                 new Token(Token.Type.IDENTIFIER, "obj", 0),
                                 new Token(Token.Type.OPERATOR, ".", 3),
                                 new Token(Token.Type.IDENTIFIER, "field", 4)
                         ),
-                        new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "obj")), "field")
+                        new Ast.Expression.Access(Optional.of(new
+                                Ast.Expression.Access(Optional.empty(), "obj")), "field")
                 )
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void testFunctionExpression(String test, List<Token> tokens, Ast.Expr.Function expected) {
+    void testFunctionExpression(String test, List<Token> tokens, Ast.Expression.Function expected) {
         test(tokens, expected, Parser::parseExpression);
     }
 
@@ -227,16 +230,16 @@ final class ParserExpressionTests {
         return Stream.of(
                 Arguments.of("Zero Arguments",
                         Arrays.asList(
-                                //name()
+                                // name()
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "(", 4),
                                 new Token(Token.Type.OPERATOR, ")", 5)
                         ),
-                        new Ast.Expr.Function(Optional.empty(), "name", Arrays.asList())
+                        new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList())
                 ),
                 Arguments.of("Multiple Arguments",
                         Arrays.asList(
-                                //name(expr1, expr2, expr3)
+                                // name(expr1, expr2, expr3)
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "(", 4),
                                 new Token(Token.Type.IDENTIFIER, "expr1", 5),
@@ -246,27 +249,15 @@ final class ParserExpressionTests {
                                 new Token(Token.Type.IDENTIFIER, "expr3", 19),
                                 new Token(Token.Type.OPERATOR, ")", 24)
                         ),
-                        new Ast.Expr.Function(Optional.empty(), "name", Arrays.asList(
-                                new Ast.Expr.Access(Optional.empty(), "expr1"),
-                                new Ast.Expr.Access(Optional.empty(), "expr2"),
-                                new Ast.Expr.Access(Optional.empty(), "expr3")
+                        new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList(
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"),
+                                new Ast.Expression.Access(Optional.empty(), "expr3")
                         ))
-                ),
-                Arguments.of("Method Call",
-                        Arrays.asList(
-                                //obj.method()
-                                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                                new Token(Token.Type.OPERATOR, ".", 3),
-                                new Token(Token.Type.IDENTIFIER, "method", 4),
-                                new Token(Token.Type.OPERATOR, "(", 10),
-                                new Token(Token.Type.OPERATOR, ")", 11)
-                        ),
-                        new Ast.Expr.Function(Optional.of(new Ast.Expr.Access(Optional.empty(), "obj")), "method", Arrays.asList())
                 )
         );
     }
 
- 
     /**
      * Standard test function. If expected is null, a ParseException is expected
      * to be thrown (not used in the provided tests).

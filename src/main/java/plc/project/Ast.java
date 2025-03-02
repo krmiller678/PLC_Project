@@ -5,8 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * See the Parser assignment specification for specific notes on each AST class
- * and how to use it.
+ * See the Parser assignment specification for additional notes on each AST class.
  */
 public abstract class Ast {
 
@@ -48,10 +47,12 @@ public abstract class Ast {
     public static final class Field extends Ast {
 
         private final String name;
-        private final Optional<Expr> value;
+        private final boolean constant;
+        private final Optional<Ast.Expression> value;
 
-        public Field(String name, Optional<Expr> value) {
+        public Field(String name, boolean constant, Optional<Ast.Expression> value) {
             this.name = name;
+            this.constant = constant;
             this.value = value;
         }
 
@@ -59,7 +60,11 @@ public abstract class Ast {
             return name;
         }
 
-        public Optional<Expr> getValue() {
+        public boolean getConstant() {
+            return constant;
+        }
+
+        public Optional<Ast.Expression> getValue() {
             return value;
         }
 
@@ -67,6 +72,7 @@ public abstract class Ast {
         public boolean equals(Object obj) {
             return obj instanceof Field &&
                     name.equals(((Field) obj).name) &&
+                    (constant == ((Field) obj).constant) &&
                     value.equals(((Field) obj).value);
         }
 
@@ -74,6 +80,7 @@ public abstract class Ast {
         public String toString() {
             return "Ast.Field{" +
                     "name='" + name + '\'' +
+                    ", constant='" + constant + '\'' +
                     ", value=" + value +
                     '}';
         }
@@ -84,9 +91,9 @@ public abstract class Ast {
 
         private final String name;
         private final List<String> parameters;
-        private final List<Stmt> statements;
+        private final List<Statement> statements;
 
-        public Method(String name, List<String> parameters, List<Stmt> statements) {
+        public Method(String name, List<String> parameters, List<Statement> statements) {
             this.name = name;
             this.parameters = parameters;
             this.statements = statements;
@@ -100,7 +107,7 @@ public abstract class Ast {
             return parameters;
         }
 
-        public List<Stmt> getStatements() {
+        public List<Statement> getStatements() {
             return statements;
         }
 
@@ -123,41 +130,41 @@ public abstract class Ast {
 
     }
 
-    public static abstract class Stmt extends Ast {
+    public static abstract class Statement extends Ast {
 
-        public static final class Expression extends Stmt {
+        public static final class Expression extends Statement {
 
-            private final Expr expression;
+            private final Ast.Expression expression;
 
-            public Expression(Expr expression) {
+            public Expression(Ast.Expression expression) {
                 this.expression = expression;
             }
 
-            public Expr getExpression() {
+            public Ast.Expression getExpression() {
                 return expression;
             }
 
             @Override
             public boolean equals(Object obj) {
-                return obj instanceof Expression &&
-                        expression.equals(((Expression) obj).expression);
+                return obj instanceof Ast.Statement.Expression &&
+                        expression.equals(((Ast.Statement.Expression) obj).expression);
             }
 
             @Override
             public String toString() {
-                return "Ast.Stmt.Expression{" +
+                return "Ast.Statement.Expression{" +
                         "expression=" + expression +
                         '}';
             }
 
         }
 
-        public static final class Declaration extends Stmt {
+        public static final class Declaration extends Statement {
 
             private String name;
-            private Optional<Expr> value;
+            private Optional<Ast.Expression> value;
 
-            public Declaration(String name, Optional<Expr> value) {
+            public Declaration(String name, Optional<Ast.Expression> value) {
                 this.name = name;
                 this.value = value;
             }
@@ -166,7 +173,7 @@ public abstract class Ast {
                 return name;
             }
 
-            public Optional<Expr> getValue() {
+            public Optional<Ast.Expression> getValue() {
                 return value;
             }
 
@@ -179,7 +186,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Stmt.Declaration{" +
+                return "Ast.Statement.Declaration{" +
                         "name='" + name + '\'' +
                         ", value=" + value +
                         '}';
@@ -187,21 +194,21 @@ public abstract class Ast {
 
         }
 
-        public static final class Assignment extends Stmt {
+        public static final class Assignment extends Statement {
 
-            private final Expr receiver;
-            private final Expr value;
+            private final Ast.Expression receiver;
+            private final Ast.Expression value;
 
-            public Assignment(Expr receiver, Expr value) {
+            public Assignment(Ast.Expression receiver, Ast.Expression value) {
                 this.receiver = receiver;
                 this.value = value;
             }
 
-            public Expr getReceiver() {
+            public Ast.Expression getReceiver() {
                 return receiver;
             }
 
-            public Expr getValue() {
+            public Ast.Expression getValue() {
                 return value;
             }
 
@@ -214,7 +221,7 @@ public abstract class Ast {
 
             @Override
             public final String toString() {
-                return "Ast.Stmt.Assignment{" +
+                return "Ast.Statement.Assignment{" +
                         "receiver=" + receiver +
                         ", value=" + value +
                         '}';
@@ -222,28 +229,28 @@ public abstract class Ast {
 
         }
 
-        public static final class If extends Stmt {
+        public static final class If extends Statement {
 
-            private final Expr condition;
-            private final List<Stmt> thenStatements;
-            private final List<Stmt> elseStatements;
+            private final Ast.Expression condition;
+            private final List<Statement> thenStatements;
+            private final List<Statement> elseStatements;
 
 
-            public If(Expr condition, List<Stmt> thenStatements, List<Stmt> elseStatements) {
+            public If(Ast.Expression condition, List<Statement> thenStatements, List<Statement> elseStatements) {
                 this.condition = condition;
                 this.thenStatements = thenStatements;
                 this.elseStatements = elseStatements;
             }
 
-            public Expr getCondition() {
+            public Ast.Expression getCondition() {
                 return condition;
             }
 
-            public List<Stmt> getThenStatements() {
+            public List<Statement> getThenStatements() {
                 return thenStatements;
             }
 
-            public List<Stmt> getElseStatements() {
+            public List<Statement> getElseStatements() {
                 return elseStatements;
             }
 
@@ -257,7 +264,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Stmt.If{" +
+                return "Ast.Statement.If{" +
                         "condition=" + condition +
                         ", thenStatements=" + thenStatements +
                         ", elseStatements=" + elseStatements +
@@ -266,64 +273,93 @@ public abstract class Ast {
 
         }
 
-        public static final class For extends Stmt {
+        public static final class For extends Statement {
 
-            private final String name;
-            private final Expr value;
-            private final List<Stmt> statements;
+            private final Statement initialization;
+            private final Ast.Expression condition;
+            private final Statement increment;
+            private final List<Statement> statements;
 
-            public For(String name, Expr value, List<Stmt> statements) {
-                this.name = name;
-                this.value = value;
+            public For(Statement initialization, Ast.Expression condition, Statement increment, List<Statement> statements) {
+                this.initialization = initialization;
+                this.condition = condition;
+                this.increment = increment;
                 this.statements = statements;
             }
 
-            public String getName() {
-                return name;
+            public Ast.Statement getInitialization() {
+                return initialization;
             }
 
-            public Expr getValue() {
-                return value;
+            public Ast.Expression getCondition() {
+                return condition;
             }
 
-            public List<Stmt> getStatements() {
+            public Ast.Statement getIncrement() {
+                return increment;
+            }
+
+            public List<Statement> getStatements() {
                 return statements;
             }
 
             @Override
             public boolean equals(Object obj) {
-                return obj instanceof For &&
-                        name.equals(((For) obj).name) &&
-                        value.equals(((For) obj).value) &&
-                        statements.equals(((For) obj).statements);
+
+                boolean init, incr;
+                For myFor = null;
+
+                if (obj instanceof For) {
+                    myFor = (For) obj;
+                } else {
+                    return false;
+                }
+
+                if (initialization == null || myFor.initialization == null) {
+                    init = initialization == myFor.initialization;
+                } else {
+                    init = initialization.equals(myFor.initialization);
+                }
+
+                if (increment == null || myFor.increment == null) {
+                    incr = increment == myFor.increment;
+                } else {
+                    incr = increment.equals(myFor.increment);
+                }
+
+                return  init &&
+                        condition.equals(myFor.condition) &&
+                        incr &&
+                        statements.equals(myFor.statements);
             }
 
             @Override
             public String toString() {
                 return "For{" +
-                        "name='" + name + '\'' +
-                        ", value=" + value +
+                        "initialization=" + initialization +
+                        ", condition=" + condition +
+                        ", increment=" + increment +
                         ", statements=" + statements +
                         '}';
             }
 
         }
 
-        public static final class While extends Stmt {
+        public static final class While extends Statement {
 
-            private final Expr condition;
-            private final List<Stmt> statements;
+            private final Ast.Expression condition;
+            private final List<Statement> statements;
 
-            public While(Expr condition, List<Stmt> statements) {
+            public While(Ast.Expression condition, List<Statement> statements) {
                 this.condition = condition;
                 this.statements = statements;
             }
 
-            public Expr getCondition() {
+            public Ast.Expression getCondition() {
                 return condition;
             }
 
-            public List<Stmt> getStatements() {
+            public List<Statement> getStatements() {
                 return statements;
             }
 
@@ -336,7 +372,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Stmt.While{" +
+                return "Ast.Statement.While{" +
                         "condition=" + condition +
                         ", statements=" + statements +
                         '}';
@@ -344,15 +380,15 @@ public abstract class Ast {
 
         }
 
-        public static final class Return extends Stmt {
+        public static final class Return extends Statement {
 
-            private final Expr value;
+            private final Ast.Expression value;
 
-            public Return(Expr value) {
+            public Return(Ast.Expression value) {
                 this.value = value;
             }
 
-            public Expr getValue() {
+            public Ast.Expression getValue() {
                 return value;
             }
 
@@ -364,7 +400,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Stmt.Return{" +
+                return "Ast.Statement.Return{" +
                         "value=" + value +
                         '}';
             }
@@ -373,9 +409,9 @@ public abstract class Ast {
 
     }
 
-    public static abstract class Expr extends Ast {
+    public static abstract class Expression extends Ast {
 
-        public static final class Literal extends Expr {
+        public static final class Literal extends Ast.Expression {
 
             private final Object literal;
 
@@ -395,22 +431,22 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Expr.Literal{" +
+                return "Ast.Expression.Literal{" +
                         "literal=" + literal +
                         '}';
             }
 
         }
 
-        public static final class Group extends Expr {
+        public static final class Group extends Ast.Expression {
 
-            private final Expr expression;
+            private final Ast.Expression expression;
 
-            public Group(Expr expression) {
+            public Group(Ast.Expression expression) {
                 this.expression = expression;
             }
 
-            public Expr getExpression() {
+            public Ast.Expression getExpression() {
                 return expression;
             }
 
@@ -422,20 +458,20 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Expr.Group{" +
+                return "Ast.Expression.Group{" +
                         "expression=" + expression +
                         '}';
             }
 
         }
 
-        public static final class Binary extends Expr {
+        public static final class Binary extends Ast.Expression {
 
             private final String operator;
-            private final Expr left;
-            private final Expr right;
+            private final Ast.Expression left;
+            private final Ast.Expression right;
 
-            public Binary(String operator, Expr left, Expr right) {
+            public Binary(String operator, Ast.Expression left, Ast.Expression right) {
                 this.operator = operator;
                 this.left = left;
                 this.right = right;
@@ -445,11 +481,11 @@ public abstract class Ast {
                 return operator;
             }
 
-            public Expr getLeft() {
+            public Ast.Expression getLeft() {
                 return left;
             }
 
-            public Expr getRight() {
+            public Ast.Expression getRight() {
                 return right;
             }
 
@@ -463,7 +499,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Expr.Binary{" +
+                return "Ast.Expression.Binary{" +
                         "operator='" + operator + '\'' +
                         ", left=" + left +
                         ", right=" + right +
@@ -472,17 +508,17 @@ public abstract class Ast {
 
         }
 
-        public static final class Access extends Expr {
+        public static final class Access extends Ast.Expression {
 
-            private final Optional<Expr> receiver;
+            private final Optional<Ast.Expression> receiver;
             private final String name;
 
-            public Access(Optional<Expr> receiver, String name) {
+            public Access(Optional<Ast.Expression> receiver, String name) {
                 this.receiver = receiver;
                 this.name = name;
             }
 
-            public Optional<Expr> getReceiver() {
+            public Optional<Ast.Expression> getReceiver() {
                 return receiver;
             }
 
@@ -499,7 +535,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Expr.Access{" +
+                return "Ast.Expression.Access{" +
                         "receiver=" + receiver +
                         ", name='" + name + '\'' +
                         '}';
@@ -507,19 +543,19 @@ public abstract class Ast {
 
         }
 
-        public static final class Function extends Expr {
+        public static final class Function extends Ast.Expression {
 
-            private final Optional<Expr> receiver;
+            private final Optional<Ast.Expression> receiver;
             private final String name;
-            private final List<Expr> arguments;
+            private final List<Ast.Expression> arguments;
 
-            public Function(Optional<Expr> receiver, String name, List<Expr> arguments) {
+            public Function(Optional<Ast.Expression> receiver, String name, List<Ast.Expression> arguments) {
                 this.receiver = receiver;
                 this.name = name;
                 this.arguments = arguments;
             }
 
-            public Optional<Expr> getReceiver() {
+            public Optional<Ast.Expression> getReceiver() {
                 return receiver;
             }
 
@@ -527,7 +563,7 @@ public abstract class Ast {
                 return name;
             }
 
-            public List<Expr> getArguments() {
+            public List<Ast.Expression> getArguments() {
                 return arguments;
             }
 
@@ -541,7 +577,7 @@ public abstract class Ast {
 
             @Override
             public String toString() {
-                return "Ast.Expr.Function{" +
+                return "Ast.Expression.Function{" +
                         "receiver=" + receiver +
                         ", name='" + name + '\'' +
                         ", arguments=" + arguments +
@@ -551,5 +587,4 @@ public abstract class Ast {
         }
 
     }
-
 }

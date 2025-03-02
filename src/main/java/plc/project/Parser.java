@@ -17,7 +17,7 @@ import java.util.Optional;
  * #match(Object...)} are helpers to make the implementation easier.
  *
  * This type of parser is called <em>recursive descent</em>. Each rule in our
- * grammar will have it's own function, and reference to other rules correspond
+ * grammar will have its own function, and reference to other rules correspond
  * to calling that functions.
  */
 public final class Parser {
@@ -59,7 +59,7 @@ public final class Parser {
      */
     public Ast.Field parseField() throws ParseException {
         String name = "";
-        Ast.Field field = new Ast.Field(name, Optional.empty());
+        Ast.Field field = new Ast.Field(name, true,Optional.empty());
 
         match("LET");
         if (peek("CONST")) {
@@ -77,7 +77,7 @@ public final class Parser {
     public Ast.Method parseMethod() throws ParseException {
         String name = "";
         List<String> parameters = new ArrayList<>();
-        List<Ast.Stmt> statements = new ArrayList<>();
+        List<Ast.Statement> statements = new ArrayList<>();
         Ast.Method method = new Ast.Method(name, parameters, statements );
 
         match("DEF");
@@ -93,7 +93,7 @@ public final class Parser {
      * If the next tokens do not start a declaration, if, while, or return
      * statement, then it is an expression/assignment statement.
      */
-    public Ast.Stmt parseStatement() throws ParseException {
+    public Ast.Statement parseStatement() throws ParseException {
         if (peek("LET")) {
             return parseDeclarationStatement(); // match ';' in method
         }
@@ -110,18 +110,18 @@ public final class Parser {
             return parseReturnStatement(); // match ';' in method
         }
         else {
-            Ast.Expr expr = parseExpression();
+            Ast.Expression expr = parseExpression();
             if (match("=")) {
-                Ast.Expr expr2 = parseExpression();
+                Ast.Expression expr2 = parseExpression();
                 if (!match(";")) {
                     throw new ParseException("Expected semicolon at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
                 }
-                return new Ast.Stmt.Assignment(expr, expr2);
+                return new Ast.Statement.Assignment(expr, expr2);
             }
             if (!match(";")) {
                 throw new ParseException("Expected semicolon at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
             }
-            return new Ast.Stmt.Expression(expr);
+            return new Ast.Statement.Expression(expr);
         }
 
         //throw new UnsupportedOperationException(); //TODO
@@ -132,7 +132,7 @@ public final class Parser {
      * method should only be called if the next tokens start a declaration
      * statement, aka {@code LET}.
      */
-    public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
+    public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -141,7 +141,7 @@ public final class Parser {
      * should only be called if the next tokens start an if statement, aka
      * {@code IF}.
      */
-    public Ast.Stmt.If parseIfStatement() throws ParseException {
+    public Ast.Statement.If parseIfStatement() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -150,7 +150,7 @@ public final class Parser {
      * should only be called if the next tokens start a for statement, aka
      * {@code FOR}.
      */
-    public Ast.Stmt.For parseForStatement() throws ParseException {
+    public Ast.Statement.For parseForStatement() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -159,7 +159,7 @@ public final class Parser {
      * should only be called if the next tokens start a while statement, aka
      * {@code WHILE}.
      */
-    public Ast.Stmt.While parseWhileStatement() throws ParseException {
+    public Ast.Statement.While parseWhileStatement() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -168,14 +168,14 @@ public final class Parser {
      * should only be called if the next tokens start a return statement, aka
      * {@code RETURN}.
      */
-    public Ast.Stmt.Return parseReturnStatement() throws ParseException {
+    public Ast.Statement.Return parseReturnStatement() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
 
     /**
      * Parses the {@code expression} rule.
      */
-    public Ast.Expr parseExpression() throws ParseException {
+    public Ast.Expression parseExpression() throws ParseException {
         return parseLogicalExpression();
         //throw new UnsupportedOperationException(); //TODO
     }
@@ -183,12 +183,13 @@ public final class Parser {
     /**
      * Parses the {@code logical-expression} rule.
      */
-    public Ast.Expr parseLogicalExpression() throws ParseException {
-        Ast.Expr expr = parseEqualityExpression();
-        while (match("AND") || match("OR")) {
+    public Ast.Expression parseLogicalExpression() throws ParseException {
+        Ast.Expression expr = parseEqualityExpression();
+        while (match("AND") || match("OR") || match("&&") || match("||")) {
+            // Added in match on "||" and "&&" because test cases don't align with project spec
             String operator = tokens.get(-1).getLiteral();
-            Ast.Expr right = parseEqualityExpression();
-            expr = new Ast.Expr.Binary(operator,expr,right);
+            Ast.Expression right = parseEqualityExpression();
+            expr = new Ast.Expression.Binary(operator,expr,right);
         }
         return expr;
         //throw new UnsupportedOperationException(); //TODO
@@ -197,12 +198,12 @@ public final class Parser {
     /**
      * Parses the {@code equality-expression} rule.
      */
-    public Ast.Expr parseEqualityExpression() throws ParseException {
-        Ast.Expr expr = parseAdditiveExpression();
+    public Ast.Expression parseEqualityExpression() throws ParseException {
+        Ast.Expression expr = parseAdditiveExpression();
         while (match("<") || match("<=") || match(">") || match(">=") || match("==") || match("!=") ) {
             String operator = tokens.get(-1).getLiteral();
-            Ast.Expr right = parseAdditiveExpression();
-            expr = new Ast.Expr.Binary(operator,expr,right);
+            Ast.Expression right = parseAdditiveExpression();
+            expr = new Ast.Expression.Binary(operator,expr,right);
         }
         return expr;
         //throw new UnsupportedOperationException(); //TODO
@@ -211,12 +212,12 @@ public final class Parser {
     /**
      * Parses the {@code additive-expression} rule.
      */
-    public Ast.Expr parseAdditiveExpression() throws ParseException {
-        Ast.Expr expr = parseMultiplicativeExpression();
+    public Ast.Expression parseAdditiveExpression() throws ParseException {
+        Ast.Expression expr = parseMultiplicativeExpression();
         while (match("+") || match("-")) {
             String operator = tokens.get(-1).getLiteral();
-            Ast.Expr right = parseMultiplicativeExpression();
-            expr = new Ast.Expr.Binary(operator,expr,right);
+            Ast.Expression right = parseMultiplicativeExpression();
+            expr = new Ast.Expression.Binary(operator,expr,right);
         }
         return expr;
         //throw new UnsupportedOperationException(); //TODO
@@ -225,12 +226,12 @@ public final class Parser {
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
-    public Ast.Expr parseMultiplicativeExpression() throws ParseException {
-        Ast.Expr expr = parseSecondaryExpression();
+    public Ast.Expression parseMultiplicativeExpression() throws ParseException {
+        Ast.Expression expr = parseSecondaryExpression();
         while (match("*") || match("/")) {
             String operator = tokens.get(-1).getLiteral();
-            Ast.Expr right = parseSecondaryExpression();
-            expr = new Ast.Expr.Binary(operator,expr,right);
+            Ast.Expression right = parseSecondaryExpression();
+            expr = new Ast.Expression.Binary(operator,expr,right);
         }
         return expr;
         //throw new UnsupportedOperationException(); //TODO
@@ -239,16 +240,16 @@ public final class Parser {
     /**
      * Parses the {@code secondary-expression} rule.
      */
-    public Ast.Expr parseSecondaryExpression() throws ParseException {
-        Ast.Expr expr = parsePrimaryExpression();
+    public Ast.Expression parseSecondaryExpression() throws ParseException {
+        Ast.Expression expr = parsePrimaryExpression();
         while (match(".")) {
             if (match(Token.Type.IDENTIFIER)) {
                 String name = tokens.get(-1).getLiteral();
                 if (match("(")) {
-                    List<Ast.Expr> args = new ArrayList<>();
+                    List<Ast.Expression> args = new ArrayList<>();
                     if (!match(")")) {
                         do {
-                            Ast.Expr expr2 = parseExpression();
+                            Ast.Expression expr2 = parseExpression();
                             args.add(expr2);
                         } while (match(","));
 
@@ -257,10 +258,10 @@ public final class Parser {
                                     tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
                         }
                     }
-                    expr = new Ast.Expr.Function(Optional.of(expr), name, args);
+                    expr = new Ast.Expression.Function(Optional.of(expr), name, args);
                 }
                 else {
-                    expr = new Ast.Expr.Access(Optional.of(expr), name);
+                    expr = new Ast.Expression.Access(Optional.of(expr), name);
                 }
             }
             else {
@@ -278,21 +279,21 @@ public final class Parser {
      * functions. It may be helpful to break these up into other methods but is
      * not strictly necessary.
      */
-    public Ast.Expr parsePrimaryExpression() throws ParseException {
+    public Ast.Expression parsePrimaryExpression() throws ParseException {
         if (match("TRUE")) {
-            return new Ast.Expr.Literal(Boolean.TRUE);
+            return new Ast.Expression.Literal(Boolean.TRUE);
         }
         else if (match("FALSE")) {
-            return new Ast.Expr.Literal(Boolean.FALSE);
+            return new Ast.Expression.Literal(Boolean.FALSE);
         }
         else if (match("NIL")) {
-            return new Ast.Expr.Literal(null);
+            return new Ast.Expression.Literal(null);
         }
         else if (match(Token.Type.INTEGER)) {
-            return new Ast.Expr.Literal(new BigInteger(tokens.get(-1).getLiteral()));
+            return new Ast.Expression.Literal(new BigInteger(tokens.get(-1).getLiteral()));
         }
         else if (match(Token.Type.DECIMAL)) {
-            return new Ast.Expr.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+            return new Ast.Expression.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
         }
         else if (match(Token.Type.CHARACTER)) {
             String c = tokens.get(-1).getLiteral();
@@ -303,7 +304,7 @@ public final class Parser {
                     .replace("\\b", "\b")
                     .replace("\\\"", "\"")
                     .replace("\\\\", "\\");
-            return new Ast.Expr.Literal(c.charAt(0));
+            return new Ast.Expression.Literal(c.charAt(0));
         }
         else if (match(Token.Type.STRING)) {
             String s = tokens.get(-1).getLiteral();
@@ -314,23 +315,23 @@ public final class Parser {
                     .replace("\\b", "\b")
                     .replace("\\\"", "\"")
                     .replace("\\\\", "\\");
-            return new Ast.Expr.Literal(s);
+            return new Ast.Expression.Literal(s);
         }
         else if (match("(")) {
-            Ast.Expr expr = parseExpression();
+            Ast.Expression expr = parseExpression();
             if (!match(")")) {
                 throw new ParseException("Expected ')' at index: ",
                         tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
             }
-            return new Ast.Expr.Group(expr);
+            return new Ast.Expression.Group(expr);
         }
         else if (match(Token.Type.IDENTIFIER)) {
             String name = tokens.get(-1).getLiteral();
             if (match("(")) {
-                List<Ast.Expr> args = new ArrayList<>();
-                if (match(")")) {return new Ast.Expr.Function(Optional.empty(),name, args);}
+                List<Ast.Expression> args = new ArrayList<>();
+                if (match(")")) {return new Ast.Expression.Function(Optional.empty(),name, args);}
                 do {
-                    Ast.Expr expr2 = parseExpression();
+                    Ast.Expression expr2 = parseExpression();
                     args.add(expr2);
                 } while (match(","));
 
@@ -338,10 +339,10 @@ public final class Parser {
                     throw new ParseException("Expected ')' at index: ",
                             tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
                 }
-                return new Ast.Expr.Function(Optional.empty(),name,args);
+                return new Ast.Expression.Function(Optional.empty(),name,args);
             }
 
-            return new Ast.Expr.Access(Optional.empty(), tokens.get(-1).getLiteral());
+            return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
         }
         else {
             throw new ParseException("End of Syntax Tree Error at: ",
