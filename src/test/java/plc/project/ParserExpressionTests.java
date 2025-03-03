@@ -37,6 +37,33 @@ final class ParserExpressionTests {
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
                         new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList()))
+                ),
+                Arguments.of("Variable",
+                        Arrays.asList(
+                                // name();
+                                new Token(Token.Type.IDENTIFIER, "expr", 0),
+                                new Token(Token.Type.OPERATOR, ";", 4)
+                        ),
+                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "expr"))
+                ),
+                Arguments.of("Method",
+                        Arrays.asList(
+                                // name();
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.OPERATOR, ")", 11),
+                                new Token(Token.Type.OPERATOR, ";", 12)
+                        ),
+                        new Ast.Statement.Expression(new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList()))
+                ),
+                Arguments.of("Missing Semicolon",
+                        Arrays.asList(
+                                // name();
+                                new Token(Token.Type.IDENTIFIER, "x", 0)
+                        ),
+                        null
                 )
         );
     }
@@ -267,7 +294,8 @@ final class ParserExpressionTests {
         if (expected != null) {
             Assertions.assertEquals(expected, function.apply(parser));
         } else {
-            Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
+            ParseException exception = Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
+            Assertions.assertEquals(1, exception.getIndex());
         }
     }
 
