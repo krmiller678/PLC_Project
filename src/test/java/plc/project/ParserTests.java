@@ -64,6 +64,25 @@ final class ParserTests {
                                         new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
                                 )))
                         )
+                ),
+                Arguments.of("Method Field",
+                        Arrays.asList(
+                                // DEF name() DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.OPERATOR, ")", 9),
+                                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "END", 20),
+                                new Token(Token.Type.IDENTIFIER, "LET", 24),
+                                new Token(Token.Type.IDENTIFIER, "name", 28),
+                                new Token(Token.Type.OPERATOR, "=", 33),
+                                new Token(Token.Type.IDENTIFIER, "expr", 35),
+                                new Token(Token.Type.OPERATOR, ";", 40)
+                        ),
+                        null
                 )
         );
     }
@@ -85,6 +104,12 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
                         new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList()))
+                ),
+                Arguments.of("Invalid expression",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "?", 0)
+                        ),
+                        null
                 )
         );
     }
@@ -187,6 +212,23 @@ final class ParserTests {
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1"))),
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt2")))
                         )
+                ),
+                Arguments.of("Missing DO",
+                        Arrays.asList(
+                                // IF expr DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3)
+                        ),
+                        null
+                ),
+                Arguments.of("Invalid DO",
+                        Arrays.asList(
+                                // IF expr DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                                new Token(Token.Type.IDENTIFIER, "THEN", 8)
+                        ),
+                        null
                 )
         );
     }
@@ -524,7 +566,8 @@ final class ParserTests {
         if (expected != null) {
             Assertions.assertEquals(expected, function.apply(parser));
         } else {
-            Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
+            ParseException e = Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
+            System.out.println(e.getMessage() + e.getIndex());
         }
     }
 

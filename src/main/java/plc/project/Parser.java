@@ -43,11 +43,15 @@ public final class Parser {
             if (peek("LET")) {
                 fields.add(parseField());
             }
-            else if (peek("DEF")) {
+            else
+                break;
+        }
+        while (tokens.has(0)) {
+            if (peek("DEF")) {
                 methods.add(parseMethod());
             }
             else {
-                throw new ParseException("Expected a field or method at index: ", tokens.get(0).getIndex());
+                throw new ParseException("Expected a method at index: ", tokens.get(0).getIndex());
             }
         }
         return source;
@@ -68,7 +72,11 @@ public final class Parser {
             constant = true;
         }
         if (!match(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected an identifier at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         name = tokens.get(-1).getLiteral();
         if (match("=")) {
@@ -97,7 +105,11 @@ public final class Parser {
 
         match("DEF");
         if (!match(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected an identifier at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         name = tokens.get(-1).getLiteral();
 
@@ -117,7 +129,11 @@ public final class Parser {
             throw new ParseException("Expected right paren", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         if(!match("DO")) {
-            throw new ParseException("Expected DO", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected DO at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected DO: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         while (!match("END")) {
             statements.add(parseStatement());
@@ -171,7 +187,11 @@ public final class Parser {
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
         match("LET");
         if (!match(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected an identifier at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         String name = tokens.get(-1).getLiteral();
         Optional<Ast.Expression> value = Optional.empty();
@@ -208,7 +228,10 @@ public final class Parser {
             throw new ParseException("Expected an expression", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         if(!match("DO")) {
-            throw new ParseException("Expected DO", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected DO at index: ", tokens.get(0).getIndex());
+            }
+            throw new ParseException("Expected DO: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         while (!match("END") && !match("ELSE")) {
             thenStatements.add(parseStatement());
@@ -279,7 +302,11 @@ public final class Parser {
         List<Ast.Statement> statements = new ArrayList<>();
 
         if (!match("DO")) {
-            throw new ParseException("Expected DO", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            if (tokens.has(0)) {
+                throw new ParseException("Expected DO at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected DO: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         while (!match("END")) {
             statements.add(parseStatement());
@@ -475,7 +502,7 @@ public final class Parser {
         }
         else {
             throw new ParseException("End of Syntax Tree Error at: ",
-                    tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+                    tokens.get(0).getIndex());
         }
         //throw new UnsupportedOperationException();
     }
