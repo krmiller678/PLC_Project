@@ -139,13 +139,15 @@ final class InterpreterTests {
     void testFieldAssignmentStatement() {
         Scope scope = new Scope(null);
         Scope object = new Scope(null);
-        object.defineVariable("field", false, Environment.create("object.field"));
+        Scope field = new Scope(null);
+        field.defineVariable("var", false, Environment.create("object.field.var"));
+        object.defineVariable("field", false, new Environment.PlcObject(field, "object.field"));
         scope.defineVariable("object", false, new Environment.PlcObject(object, "object"));
         test(new Ast.Statement.Assignment(
-                new Ast.Expression.Access(Optional.of(new Ast.Expression.Access(Optional.empty(), "object")),"field"),
+                new Ast.Expression.Access(Optional.of(new Ast.Expression.Access(Optional.of(new Ast.Expression.Access(Optional.empty(), "object")), "field")),"var"),
                 new Ast.Expression.Literal(BigInteger.ONE)
         ), Environment.NIL.getValue(), scope);
-        Assertions.assertEquals(BigInteger.ONE, object.lookupVariable("field").getValue().getValue());
+        Assertions.assertEquals(BigInteger.ONE, field.lookupVariable("var").getValue().getValue());
     }
 
     @ParameterizedTest

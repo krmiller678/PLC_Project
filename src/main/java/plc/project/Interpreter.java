@@ -3,6 +3,8 @@ package plc.project;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
@@ -22,23 +24,58 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-
-        throw new UnsupportedOperationException(); //TODO
+        for (Ast.Field field : ast.getFields()) {
+            visit(field);
+        }
+        for (Ast.Method m : ast.getMethods()) {
+            visit(m);
+        }
+        try {
+            return scope.lookupFunction("main", 0).invoke(new ArrayList<>());
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            return Environment.NIL;
+        }
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getValue().isPresent()) {
+            scope.defineVariable(ast.getName(), ast.getConstant(), visit(ast.getValue().get()));
+        }
+        else {
+            scope.defineVariable(ast.getName(), ast.getConstant(), Environment.NIL);
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+            scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+                scope = new Scope(scope);
+                for (int i = 0; i < args.size(); ++i) {
+                    scope.defineVariable(ast.getParameters().get(i), false, args.get(i));
+                }
+                for (Ast.Statement statement : ast.getStatements()) {
+                    try {
+                        visit(statement);
+                    }
+                    catch (Return e) {
+                        return e.value;
+                    }
+                }
+                scope = scope.getParent();
+                return Environment.NIL;
+            });
+
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
@@ -50,22 +87,69 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             scope.defineVariable(ast.getName(), false, Environment.NIL);
         }
         return Environment.NIL;
-        //TODO
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver() instanceof Ast.Expression.Access){
+            Environment.PlcObject value = visit(ast.getValue());
+            if (((Ast.Expression.Access) ast.getReceiver()).getReceiver().isPresent()) {
+                Environment.PlcObject receiver = visit(((Ast.Expression.Access) ast.getReceiver()).getReceiver().get());
+                receiver.setField(((Ast.Expression.Access) ast.getReceiver()).getName(), value);
+            }
+            else {
+                scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).setValue(value);
+            }
+        }
+        else {
+            throw new RuntimeException("Expected an Ast.Expression.Access");
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (requireType(Boolean.class, visit(ast.getCondition()))) {
+            try {
+                scope = new Scope(scope);
+                for (Ast.Statement statement : ast.getThenStatements()) {
+                    visit(statement);
+                }
+            }
+            finally {
+                scope = scope.getParent();
+            }
+        }
+        else {
+            try {
+                scope = new Scope(scope);
+                for (Ast.Statement statement : ast.getElseStatements()) {
+                    visit(statement);
+                }
+            }
+            finally {
+                scope = scope.getParent();
+            }
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.For ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getInitialization()); // Should just need visit to initialize in scope
+        while(requireType(Boolean.class, visit(ast.getCondition()))) {
+            try {
+                scope = new Scope(scope);
+                for (Ast.Statement statement : ast.getStatements()) {
+                    visit(statement);
+                }
+            }
+            finally {
+                scope = scope.getParent();
+                visit(ast.getIncrement()); // works in try block too due to locality of lookupVariable method
+            }
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -80,12 +164,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             }
         }
         return Environment.NIL;
-        //TODO
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        throw new Return(Environment.create(visit(ast.getValue())));  //TODO
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
@@ -99,7 +182,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Group ast) {
         return visit(ast.getExpression());
-        //TODO
     }
 
     @Override
@@ -218,18 +300,24 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
-        String receiver = "";
+        // Note - Access should not be defining a variable but retrieving value
         if (ast.getReceiver().isPresent()){
-            receiver = (String)visit(ast.getReceiver().get()).getValue();
-            return Environment.create(receiver + "." + ast.getName());
+            return visit(ast.getReceiver().get()).getField(ast.getName()).getValue();
         }
-        scope.defineVariable(ast.getName(), false, Environment.NIL);
-        return Environment.create(ast.getName());
-    } //TODO
+        return scope.lookupVariable(ast.getName()).getValue();
+    }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        List<Environment.PlcObject> args = new ArrayList<>();
+        for(int i = 0; i < ast.getArguments().size(); i++){
+            args.add(i, visit(ast.getArguments().get(i)));
+        }
+        if (ast.getReceiver().isPresent()){
+            Environment.PlcObject receiver = visit(ast.getReceiver().get());
+            return receiver.callMethod(ast.getName(), args);
+        }
+        return scope.lookupFunction(ast.getName(), ast.getArguments().size()).invoke(args);
     }
 
     /**
