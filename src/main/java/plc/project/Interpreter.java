@@ -64,8 +64,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     catch (Return e) {
                         return e.value;
                     }
+                    finally {
+                        scope = scope.getParent();
+                    }
                 }
-                scope = scope.getParent();
                 return Environment.NIL;
             });
 
