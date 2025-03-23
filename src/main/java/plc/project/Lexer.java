@@ -64,7 +64,7 @@ public final class Lexer {
         if (result) { return lexIdentifier(); }
 
         // Number starting with + or -
-        result = peek("[+-]");
+        result = peek("[+-]", "[0-9]");
         if (result) { return lexNumber(); }
 
         // Number starting with digit

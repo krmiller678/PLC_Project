@@ -1,0 +1,10 @@
+LET x = 1;
+LET y = 2;
+LET z = 3;
+DEF f(z) DO
+    RETURN x + y + z;
+END
+DEF main() DO
+    LET y = 4;
+    RETURN f(5);
+END

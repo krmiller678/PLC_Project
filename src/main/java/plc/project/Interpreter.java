@@ -52,25 +52,26 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-            scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
-                scope = new Scope(scope);
+        Scope testScope = new Scope(scope);
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            Scope currentScope = new Scope(scope);
+            try {
+                scope = testScope;
                 for (int i = 0; i < args.size(); ++i) {
                     scope.defineVariable(ast.getParameters().get(i), false, args.get(i));
                 }
                 for (Ast.Statement statement : ast.getStatements()) {
-                    try {
-                        visit(statement);
-                    }
-                    catch (Return e) {
-                        return e.value;
-                    }
-                    finally {
-                        scope = scope.getParent();
-                    }
+                    visit(statement);
                 }
                 return Environment.NIL;
-            });
-
+            }
+            catch (Return e) {
+                return e.value;
+            }
+            finally {
+                scope = currentScope.getParent();
+            }
+        });
         return Environment.NIL;
     }
 
