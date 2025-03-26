@@ -230,10 +230,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 toReturn = Environment.create(lgte.compareTo(rgte) >= 0);
                 return toReturn;
             case "==":
-                toReturn = Environment.create(visit(left).getValue() == visit(right).getValue());
+                toReturn = Environment.create((visit(left).getValue()).equals(visit(right).getValue()));
                 return toReturn;
             case "!=":
-                toReturn = Environment.create(visit(left).getValue() != visit(right).getValue());
+                toReturn = Environment.create(!(visit(left).getValue()).equals(visit(right).getValue()));
                 return toReturn;
             case "+":
                 if (visit(left).getValue() instanceof BigDecimal) {

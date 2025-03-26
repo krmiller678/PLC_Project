@@ -158,7 +158,7 @@ public final class Lexer {
 
     public Token lexOperator() {
         if (peek("[<>!=]")) {
-            match("[<>==]");
+            match("[<>!=]");
             match("=");
         }
         else {
