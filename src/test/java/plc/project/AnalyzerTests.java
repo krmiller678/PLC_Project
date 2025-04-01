@@ -1,6 +1,7 @@
 package plc.project;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -365,6 +366,91 @@ public final class AnalyzerTests {
                         ), "field"), ast -> ast.setVariable(new Environment.Variable("field", "field", Environment.Type.INTEGER, false, Environment.NIL)))
                 )
         );
+    }
+
+    // for (num = 1; num < 5; num = num + 1)
+    //      function(num);
+    // END
+
+    @Test
+    public void testFor() {
+        Scope scope = new Scope(null);
+
+        scope.defineFunction("function", "function", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL);
+        //scope.defineVariable("num", "num", ...);
+
+        // Pull the following from If test above on constructing astFor and expected
+        Ast.Statement.For astFor = new Ast.Statement.For(
+                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"), new Ast.Expression.Literal(BigInteger.ZERO)),
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                new Ast.Expression.Literal(BigInteger.valueOf(5))),
+                        new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"),
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.ONE))),
+                Arrays.asList(
+                        new Ast.Statement.Expression(
+                                new Ast.Expression.Function(
+                                        Optional.empty(),
+                                        "function",
+                                        Arrays.asList(new Ast.Expression.Access(Optional.empty(), "num"))
+                                )
+                        )
+                )
+        );
+        Ast.Statement.For expected = new Ast.Statement.For(
+                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"), new Ast.Expression.Literal(BigInteger.ZERO)),
+                new Ast.Expression.Binary("<",
+                        new Ast.Expression.Access(Optional.empty(), "num"),
+                        new Ast.Expression.Literal(BigInteger.valueOf(5))),
+                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                new Ast.Expression.Literal(BigInteger.ONE))),
+                Arrays.asList(
+                        new Ast.Statement.Expression(
+                                new Ast.Expression.Function(
+                                        Optional.empty(),
+                                        "function",
+                                        Arrays.asList(
+                                                init(
+                                                        new Ast.Expression.Function(
+                                                                Optional.empty(),
+                                                                "function",
+                                                                Arrays.asList(
+                                                                        init(
+                                                                                new Ast.Expression.Access(
+                                                                                        Optional.empty(),
+                                                                                        "num"
+                                                                                ),
+                                                                                ast -> ast.setVariable(new Environment.Variable(
+                                                                                        "num",
+                                                                                        "num",
+                                                                                        Environment.Type.INTEGER,
+                                                                                        false,
+                                                                                        Environment.NIL))
+
+                                                                        )
+                                                                )
+                                                        ),
+                                                        ast -> ast.setFunction(
+                                                                new Environment.Function(
+                                                                        "function",
+                                                                        "function",
+                                                                        Arrays.asList(Environment.Type.INTEGER),
+                                                                        Environment.Type.INTEGER,
+                                                                        args -> Environment.NIL
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        )
+                )
+        );
+
+        test(astFor, expected, scope);
     }
 
     @ParameterizedTest(name = "{0}")
