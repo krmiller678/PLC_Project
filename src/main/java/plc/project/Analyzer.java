@@ -27,12 +27,37 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException();  // TODO
+        for (Ast.Field field : ast.getFields()) {
+            visit(field);
+        }
+        for (Ast.Method m : ast.getMethods()) {
+            visit(m);
+        }
+
+        requireAssignable(Environment.Type.INTEGER, scope.lookupFunction("main", 0).getReturnType());
+
+        return null; // TODO
     }
 
     @Override
     public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException();  // TODO
+        String name = ast.getName();
+        Environment.Type type = Environment.getType(name);
+
+        if (ast.getValue().isPresent()) {
+            visit(ast.getValue().get()); // have to visit before variable is defined
+            requireAssignable(type, ast.getValue().get().getType());
+        }
+
+        if (ast.getConstant()) {
+            if (ast.getValue().isEmpty()) {
+                throw new RuntimeException("Constant field must be initialized");
+            }
+        }
+
+        ast.setVariable(scope.defineVariable(name, name, type, ast.getConstant(), Environment.NIL));
+
+        return null;  // TODO
     }
 
     @Override
