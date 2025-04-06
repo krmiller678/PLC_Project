@@ -36,7 +36,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         requireAssignable(Environment.Type.INTEGER, scope.lookupFunction("main", 0).getReturnType());
 
-        return null; // TODO
+        return null;
     }
 
     @Override
@@ -57,7 +57,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         ast.setVariable(scope.defineVariable(name, name, type, ast.getConstant(), Environment.NIL));
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -89,7 +89,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             scope = scope.getParent();
         }
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -98,7 +98,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             throw new RuntimeException("Expected an Ast.Expression.Function");
         }
         visit(ast.getExpression());
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -122,7 +122,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         Environment.Type officialType = Environment.getType(type);
         ast.setVariable(scope.defineVariable(name, name, officialType, false, Environment.NIL));
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -138,7 +138,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             throw new RuntimeException("Assigning to a constant field");
         }
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -168,7 +168,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             scope = scope.getParent();
         }
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -197,7 +197,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             scope = scope.getParent();
         }
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -211,13 +211,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
         finally {
             scope = scope.getParent();
         }
-        return null;  // TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Return ast) {
         visit(ast.getValue());
-        return null;  // TODO
+        return null;
     }
 
     @Override
@@ -243,7 +243,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 throw new RuntimeException("BigInteger Literal exceeds Integer.MAX_VALUE");
             }
         }
-        else if (lit instanceof BigDecimal) { // TODO still need to check notes on this
+        else if (lit instanceof BigDecimal) {
             if (((BigDecimal) lit).compareTo(BigDecimal.valueOf(Double.MAX_VALUE)) < 1){
                 ast.setType(Environment.Type.DECIMAL);
             }
@@ -252,18 +252,17 @@ public final class Analyzer implements Ast.Visitor<Void> {
             }
         }
 
-        return null;  // TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Group ast) {
-        if (ast.getExpression() instanceof Ast.Expression.Binary) {
+        if (!(ast.getExpression() instanceof Ast.Expression.Binary)) {
             throw new RuntimeException("Contained expression is not binary ");
         }
         visit(ast.getExpression());
         ast.setType(ast.getExpression().getType());
         return null;
-        // TODO
     }
 
     @Override
@@ -275,7 +274,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         visit(right);
 
         switch (op) {
-            case "AND", "OR": // TODO Remove for final submission && / ||
+            case "AND", "OR":
                 requireAssignable(left.getType(), Environment.Type.BOOLEAN);
                 requireAssignable(right.getType(), Environment.Type.BOOLEAN);
                 ast.setType(Environment.Type.BOOLEAN);
@@ -315,7 +314,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             default:
                 throw new RuntimeException("Expected a valid operator, got " + op);
         }
-        return null; // TODO
+        return null;
     }
 
     @Override
@@ -331,7 +330,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         ast.setVariable(var);
 
-        return null;// TODO
+        return null;
     }
 
     @Override
@@ -353,7 +352,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             visit(arguments.get(i)); // to ensure type is assigned
             requireAssignable(func.getParameterTypes().get(i), arguments.get(i).getType());
         }
-        ast.setFunction(func);  // TODO
+        ast.setFunction(func);
         return null;
     }
 
