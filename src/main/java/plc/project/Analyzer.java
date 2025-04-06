@@ -42,7 +42,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Field ast) {
         String name = ast.getName();
-        Environment.Type type = Environment.getType(name);
+        Environment.Type type = Environment.getType(ast.getTypeName());
 
         if (ast.getValue().isPresent()) {
             visit(ast.getValue().get()); // have to visit before variable is defined
@@ -275,7 +275,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         visit(right);
 
         switch (op) {
-            case "AND", "OR", "&&", "||": // TODO Remove for final submission && / ||
+            case "AND", "OR": // TODO Remove for final submission && / ||
                 requireAssignable(left.getType(), Environment.Type.BOOLEAN);
                 requireAssignable(right.getType(), Environment.Type.BOOLEAN);
                 ast.setType(Environment.Type.BOOLEAN);

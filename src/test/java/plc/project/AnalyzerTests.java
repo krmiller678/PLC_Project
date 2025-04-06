@@ -111,6 +111,39 @@ public final class AnalyzerTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    public void testField(String test, Ast.Field ast, Ast.Field expected) {
+        Analyzer analyzer = test(ast, expected, new Scope(null));
+        if (expected != null) {
+            Assertions.assertEquals(expected.getVariable(), analyzer.scope.lookupVariable(expected.getName()));
+        }
+    }
+    private static Stream<Arguments> testField() {
+        return Stream.of(
+                Arguments.of("Declaration",
+                        // LET name: Integer;
+                        new Ast.Field("name", "Decimal", false, Optional.empty()),
+                        init(new Ast.Field("name", "Decimal", false, Optional.empty()), ast -> {
+                            ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, false, Environment.NIL));
+                        })
+                ),
+                Arguments.of("Initialization",
+                        // LET name: Integer;
+                        new Ast.Field("name", "Integer", false, Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
+                        init(new Ast.Field("name", "Integer", false, Optional.of(
+                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                        )), ast -> {ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL));
+                        })
+                ),
+                Arguments.of("Unknown",
+                        // LET name: Integer;
+                        new Ast.Field("name", "Unknown", false, Optional.empty()),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     public void testDeclarationStatement(String test, Ast.Statement.Declaration ast, Ast.Statement.Declaration expected) {
         Analyzer analyzer = test(ast, expected, new Scope(null));
         if (expected != null) {
@@ -291,18 +324,18 @@ public final class AnalyzerTests {
         return Stream.of(
                 Arguments.of("Logical AND Valid",
                         // TRUE AND FALSE
-                        new Ast.Expression.Binary("&&",
+                        new Ast.Expression.Binary("AND",
                                 new Ast.Expression.Literal(Boolean.TRUE),
                                 new Ast.Expression.Literal(Boolean.FALSE)
                         ),
-                        init(new Ast.Expression.Binary("&&",
+                        init(new Ast.Expression.Binary("AND",
                                 init(new Ast.Expression.Literal(Boolean.TRUE), ast -> ast.setType(Environment.Type.BOOLEAN)),
                                 init(new Ast.Expression.Literal(Boolean.FALSE), ast -> ast.setType(Environment.Type.BOOLEAN))
                         ), ast -> ast.setType(Environment.Type.BOOLEAN))
                 ),
                 Arguments.of("Logical AND Invalid",
                         // TRUE AND "FALSE"
-                        new Ast.Expression.Binary("&&",
+                        new Ast.Expression.Binary("AND",
                                 new Ast.Expression.Literal(Boolean.TRUE),
                                 new Ast.Expression.Literal("FALSE")
                         ),
