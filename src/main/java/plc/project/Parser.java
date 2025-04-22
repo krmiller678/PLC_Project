@@ -79,6 +79,11 @@ public final class Parser {
                 throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         name = tokens.get(-1).getLiteral();
+        // Modified parser starts here
+        checkForRequiredType();
+        String type = tokens.get(-1).getLiteral();
+        // Modified parser ends here
+
         if (match("=")) {
             if (tokens.has(0)) {
                 value = Optional.of(parseExpression());
@@ -91,7 +96,7 @@ public final class Parser {
             throw new ParseException("Expected semicolon at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
 
-        return new Ast.Field(name, constant, value);
+        return new Ast.Field(name, type, constant, value);
     }
 
     /**
@@ -102,6 +107,8 @@ public final class Parser {
         String name = "";
         List<String> parameters = new ArrayList<>();
         List<Ast.Statement> statements = new ArrayList<>();
+        Optional<String> returnType = Optional.empty();
+        List<String> parameterTypeNames = new ArrayList<>();
 
         match("DEF");
         if (!match(Token.Type.IDENTIFIER)) {
@@ -118,16 +125,24 @@ public final class Parser {
         }
         if (match(Token.Type.IDENTIFIER)) {
             parameters.add(tokens.get(-1).getLiteral());
+            checkForRequiredType();
+            parameterTypeNames.add(tokens.get(-1).getLiteral());
+
             while (match(",")) {
                 if (!match(Token.Type.IDENTIFIER)) {
                     throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
                 }
                 parameters.add(tokens.get(-1).getLiteral());
+                checkForRequiredType();
+                parameterTypeNames.add(tokens.get(-1).getLiteral());
             }
         }
+
+
         if(!match(")")) {
             throw new ParseException("Expected right paren", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
+        returnType = checkOptionalReturnType(returnType);
         if(!match("DO")) {
             if (tokens.has(0)) {
                 throw new ParseException("Expected DO at index: ", tokens.get(0).getIndex());
@@ -139,7 +154,24 @@ public final class Parser {
             statements.add(parseStatement());
         }
 
-        return new Ast.Method(name, parameters, statements );
+        return new Ast.Method(name, parameters, parameterTypeNames, returnType, statements );
+    }
+
+    private void checkForRequiredType() {
+        if (!match(":")) {
+            if (tokens.has(0)) {
+                throw new ParseException("Expected a ':' at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected a ':' ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+        }
+        if (!match(Token.Type.IDENTIFIER)) {
+            if (tokens.has(0)) {
+                throw new ParseException("Expected an identifier (type) at index: ", tokens.get(0).getIndex());
+            }
+            else
+                throw new ParseException("Expected identifier (type)", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+        }
     }
 
     /**
@@ -185,6 +217,7 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
+        Optional<String> type = Optional.empty();
         match("LET");
         if (!match(Token.Type.IDENTIFIER)) {
             if (tokens.has(0)) {
@@ -194,6 +227,7 @@ public final class Parser {
                 throw new ParseException("Expected identifier", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         String name = tokens.get(-1).getLiteral();
+        type = checkOptionalReturnType(type);
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")) {
             if (tokens.has(0)) {
@@ -207,7 +241,21 @@ public final class Parser {
             throw new ParseException("Expected semicolon at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
 
-        return new Ast.Statement.Declaration(name, value);
+        return new Ast.Statement.Declaration(name, type, value);
+    }
+
+    private Optional<String> checkOptionalReturnType(Optional<String> type) {
+        if (match(":")) {
+            if (!match(Token.Type.IDENTIFIER)) {
+                if (tokens.has(0)) {
+                    throw new ParseException("Expected an identifier (type) at index: ", tokens.get(0).getIndex());
+                }
+                else
+                    throw new ParseException("Expected identifier (type)", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            }
+            type = Optional.of(tokens.get(-1).getLiteral());
+        }
+        return type;
     }
 
     /**
