@@ -95,11 +95,11 @@ public final class Generator implements Ast.Visitor<Void> {
         print(ast.getFunction().getJvmName(),"("); // using JVM name here in case a special method is defined
 
         if (!ast.getParameters().isEmpty()) {
-            print(ast.getParameterTypeNames().get(0), " ");
+            print(ast.getFunction().getParameterTypes().get(0).getJvmName(), " ");
             print(ast.getParameters().get(0));
             for (int i = 1; i < ast.getParameters().size(); i++) {
                 print(", ");
-                print(ast.getParameterTypeNames().get(i), " ");
+                print(ast.getFunction().getParameterTypes().get(i).getJvmName(), " ");
                 print(ast.getParameters().get(i));
             }
         }
