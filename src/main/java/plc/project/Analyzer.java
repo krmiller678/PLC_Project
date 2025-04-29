@@ -69,8 +69,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if (ast.getReturnTypeName().isPresent()) {
             returnType = Environment.getType(ast.getReturnTypeName().get());
         }
-        for (String paramType : ast.getParameterTypeNames()) {
-            paramTypes.add(Environment.getType(paramType));
+        for (int i = 0; i < ast.getParameters().size(); i++) {
+            paramTypes.add(Environment.getType(ast.getParameterTypeNames().get(i)));
+            scope.defineVariable(ast.getParameters().get(i), ast.getParameters().get(i), Environment.getType(ast.getParameterTypeNames().get(i)), false, Environment.NIL);
         }
 
         Environment.Function func = scope.defineFunction(name, name, paramTypes, returnType,args -> Environment.NIL);
@@ -173,8 +174,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.For ast) {
-        visit(ast.getInitialization()); // If initialization is present, must be COMPARABLE
-        visit(ast.getIncrement()); // If initialization is present, increment needs to be same type
+        if (ast.getInitialization() != null ) {
+            visit(ast.getInitialization()); // If initialization is present, must be COMPARABLE
+        }
+        if (ast.getIncrement() != null ) {
+            visit(ast.getIncrement()); // If initialization is present, increment needs to be same type
+        }
         if (ast.getInitialization() instanceof Ast.Statement.Assignment) {
             requireAssignable(((Ast.Statement.Assignment)(ast.getInitialization())).getReceiver().getType(), Environment.Type.COMPARABLE);
             requireAssignable(((Ast.Statement.Assignment)(ast.getIncrement())).getReceiver().getType(), ((Ast.Statement.Assignment)(ast.getInitialization())).getReceiver().getType());
@@ -288,6 +293,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 if (left.getType() == Environment.Type.STRING) {
                     ast.setType(Environment.Type.STRING);
                 }
+                else if (right.getType() == Environment.Type.STRING) {
+                    ast.setType(Environment.Type.STRING);
+                }
                 else if (left.getType() == Environment.Type.INTEGER) {
                     requireAssignable(right.getType(), Environment.Type.INTEGER);
                     ast.setType(Environment.Type.INTEGER);
@@ -362,6 +370,11 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
         else if (target == Environment.Type.ANY) {
             // good to go
+        }
+        else if (type == Environment.Type.COMPARABLE) {
+            if (target.getScope().getParent() != Environment.Type.COMPARABLE.getScope()) {
+                throw new RuntimeException("Target type does not match assignment: " + target);
+            }
         }
         else if (target == Environment.Type.COMPARABLE) {
             if (type.getScope().getParent() != Environment.Type.COMPARABLE.getScope()) {

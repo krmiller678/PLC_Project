@@ -141,7 +141,7 @@ public final class Lexer {
 
     public Token lexString() {
         match("\""); // Eat up first double quote
-        while (match("[^\"\\n\\r\\\\]") || match("\\\\", "[bnrt'\"\\\\]"))  {}
+        while (match("[^\"\\n\\r\\\\]") || (match("\\\\") && match("[bnrt'\"\\\\]")))  {}
         if (peek("\"")) {
             match("\"");
             return chars.emit(Token.Type.STRING);

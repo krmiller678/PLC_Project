@@ -235,7 +235,7 @@ final class EndToEndInterpreterTests {
         return Stream.of(
                 // TRUE && FALSE
                 Arguments.of("And",
-                        "TRUE && FALSE",
+                        "TRUE AND FALSE",
                         false
                 ),
                 // TRUE || undefined

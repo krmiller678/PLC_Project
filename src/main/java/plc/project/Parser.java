@@ -334,7 +334,15 @@ public final class Parser {
             throw new ParseException("Expected right paren", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         while (!match("END")) {
-            statements.add(parseStatement());
+            if (tokens.has(0)) {
+                statements.add(parseStatement());
+            }
+            else {
+                break;
+            }
+        }
+        if (!tokens.get(-1).getLiteral().equals("END")) {
+            throw new ParseException("Expected END at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         return new Ast.Statement.For(initialization, condition, increment, statements);
     }
@@ -357,7 +365,15 @@ public final class Parser {
                 throw new ParseException("Expected DO: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         while (!match("END")) {
-            statements.add(parseStatement());
+            if (tokens.has(0)) {
+                statements.add(parseStatement());
+            }
+            else {
+                break;
+            }
+        }
+        if (!tokens.get(-1).getLiteral().equals("END")) {
+            throw new ParseException("Expected END at index: ", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
         }
         return new Ast.Statement.While(condition, statements);
     }
@@ -420,8 +436,13 @@ public final class Parser {
         Ast.Expression expr = parseMultiplicativeExpression();
         while (match("+") || match("-")) {
             String operator = tokens.get(-1).getLiteral();
+            if (tokens.has(0)) {
             Ast.Expression right = parseMultiplicativeExpression();
             expr = new Ast.Expression.Binary(operator,expr,right);
+            }
+            else {
+                throw new ParseException("Expected additive", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            }
         }
         return expr;
         //throw new UnsupportedOperationException();
@@ -434,8 +455,13 @@ public final class Parser {
         Ast.Expression expr = parseSecondaryExpression();
         while (match("*") || match("/")) {
             String operator = tokens.get(-1).getLiteral();
+            if (tokens.has(0)) {
             Ast.Expression right = parseSecondaryExpression();
             expr = new Ast.Expression.Binary(operator,expr,right);
+            }
+            else {
+                throw new ParseException("Expected multiplicative", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+            }
         }
         return expr;
         //throw new UnsupportedOperationException();

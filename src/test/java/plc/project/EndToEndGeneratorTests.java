@@ -43,6 +43,106 @@ public class EndToEndGeneratorTests {
                                 "",
                                 "}"
                         )
+                ),
+                Arguments.of("Multiple Fields and Methods",
+                            //LET x: Integer;
+                            //LET y: Decimal;
+                            //LET z: String;
+                            //DEF f(): Integer DO RETURN x; END
+                            //DEF g(): Decimal DO RETURN y; END
+                            //DEF h(): String DO RETURN z; END
+                            //DEF main(): Integer DO END
+                        "LET x: Integer;\nLET y: Decimal;\nLET z: String;\nDEF f(): Integer DO RETURN x; END\n" +
+                                "DEF g(): Decimal DO RETURN y; END\nDEF h(): String DO RETURN z; END\nDEF main(): Integer DO END",
+                        String.join(System.lineSeparator(),
+                                "public class Main {",
+                                "",
+                                "    int x;",
+                                "    double y;",
+                                "    String z;",
+                                "",
+                                "    public static void main(String[] args) {",
+                                "        System.exit(new Main().main());",
+                                "    }",
+                                "",
+                                "    int f() {",
+                                "        return x;",
+                                "    }",
+                                "",
+                                "    double g() {",
+                                "        return y;",
+                                "    }",
+                                "",
+                                "    String h() {",
+                                "        return z;",
+                                "    }",
+                                "",
+                                "    int main() {}",
+                                "",
+                                "}"
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testMethod(String test, String input, String expected) {
+        test(input, expected, new Scope(null), Parser::parseMethod);
+    }
+
+    private static Stream<Arguments> testMethod() {
+        return Stream.of(
+                Arguments.of("Square",
+                        // LET name: Integer;
+                        "DEF square(num: Decimal): Decimal DO\n" +
+                        "    RETURN num * num;\n" +
+                        "END",
+                        String.join(System.lineSeparator(),
+                                "double square(double num) {",
+                                "    return num * num;",
+                                "}"
+                        )
+                ),
+                Arguments.of("Multiple Statements",
+                        // LET name: Integer;
+                        "DEF func(x: Integer, y: Decimal, z: String) DO\n" +
+                                "    print(x);\n" +
+                                "    print(y);\n" +
+                                "    print(z);\n" +
+                                "END",
+                        String.join(System.lineSeparator(),
+                                "Void func(int x, double y, String z) {",
+                                "    System.out.println(x);",
+                                "    System.out.println(y);",
+                                "    System.out.println(z);",
+                                "}"
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testWhileStatement(String test, String input, String expected) {
+        test(input, expected, init(new Scope(null), scope -> {
+            scope.defineVariable("num", "num", Environment.Type.INTEGER, false, Environment.NIL);
+        }), Parser::parseStatement);
+    }
+
+    private static Stream<Arguments> testWhileStatement() {
+        return Stream.of(
+                Arguments.of("Multiple Statements",
+                        "WHILE num < 10 DO\n" +
+                                "    print(num + \"\\n\");\n" +
+                                "    num = num + 1;\n" +
+                                "END",
+                        String.join(System.lineSeparator(),
+                                "while (num < 10) {",
+                                "    System.out.println(num + \"\\n\");",
+                                "    num = num + 1;",
+                                "}"
+                        )
                 )
         );
     }
@@ -123,6 +223,21 @@ public class EndToEndGeneratorTests {
                         String.join(System.lineSeparator(),
                                 "for ( num = 0; num < 5; num = num + 1 ) {",
                                 "    System.out.println(num);",
+                                "}"
+                        )
+                ),
+                Arguments.of("Condition",
+                        // FOR (num = 0; num < 5; num = num + 1)
+                        //     print(num);
+                        // END
+                        "FOR (; num < 5;)\n" +
+                                "    print(num);\n" +
+                                "    num = num + 1;\n" +
+                                "END ",
+                        String.join(System.lineSeparator(),
+                                "for ( ; num < 5; ) {",
+                                "    System.out.println(num);",
+                                "    num = num + 1;",
                                 "}"
                         )
                 )

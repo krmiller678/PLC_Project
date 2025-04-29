@@ -1,17 +1,5 @@
-LET len = 5;
-DEF main() DO
-    LET while_total = 0;
-    LET for_total = 0;
-    LET i = 0;
-
-    WHILE i < len DO
-        while_total = while_total + i;
-        i = i + 1;
-    END
-
-    FOR (i = 0; i < len; i = i + 1)
-        for_total = for_total + i;
-    END
-
-    RETURN while_total == for_total;
+LET result: Boolean;
+DEF main(): Integer DO
+    result = (TRUE AND FALSE);
+    RETURN result;
 END

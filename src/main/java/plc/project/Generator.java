@@ -38,8 +38,8 @@ public final class Generator implements Ast.Visitor<Void> {
         indent++;
 
         if (!ast.getFields().isEmpty()) {
-            newline(indent);
             for (Ast.Field field : ast.getFields()) {
+                newline(indent);
                 visit(field);
             }
             newline(0);
@@ -252,6 +252,9 @@ public final class Generator implements Ast.Visitor<Void> {
         }
         else if (ast.getType().equals(Environment.Type.CHARACTER)) {
             print("'", ast.getLiteral(), "'");
+        }
+        else if (ast.getType().equals(Environment.Type.NIL)) {
+            print("null");
         }
         else {
             print(ast.getLiteral());
